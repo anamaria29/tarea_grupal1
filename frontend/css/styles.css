@@ -270,6 +270,33 @@ a {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+.note-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.favorite-star {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.3;
+  filter: grayscale(1);
+  cursor: pointer;
+  transition: opacity 0.2s ease, filter 0.2s ease, transform 0.15s ease;
+}
+
+.favorite-star:hover {
+  opacity: 0.7;
+  transform: scale(1.1);
+}
+
+.favorite-star.active {
+  opacity: 1;
+  filter: none;
+}
+
 .note-preview {
   margin: 0;
   color: var(--muted);

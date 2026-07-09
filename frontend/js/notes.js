@@ -20,6 +20,34 @@ let notes = [];
 let selectedNoteId = null;
 let searchTerm = "";
 
+const FAVORITES_KEY = "noty_favorite_notes";
+
+function getFavoriteIds() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function isFavorite(noteId) {
+  return getFavoriteIds().includes(noteId);
+}
+
+function toggleFavorite(noteId) {
+  const favorites = getFavoriteIds();
+  const index = favorites.indexOf(noteId);
+
+  if (index === -1) {
+    favorites.push(noteId);
+  } else {
+    favorites.splice(index, 1);
+  }
+
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+  renderNotesList();
+}
+
 function getNotePreview(content) {
   const container = document.createElement("div");
   container.innerHTML = content || "";
@@ -29,14 +57,19 @@ function getNotePreview(content) {
 }
 
 function getVisibleNotes() {
+  const favorites = getFavoriteIds();
   const term = searchTerm.trim().toLowerCase();
 
-  if (!term) {
-    return notes;
-  }
+  const filtered = term
+    ? notes.filter((note) => note.title.toLowerCase().includes(term)
+        || getNotePreview(note.content).toLowerCase().includes(term))
+    : notes;
 
-  return notes.filter((note) => note.title.toLowerCase().includes(term)
-    || getNotePreview(note.content).toLowerCase().includes(term));
+  return [...filtered].sort((a, b) => {
+    const aFav = favorites.includes(a.id) ? 1 : 0;
+    const bFav = favorites.includes(b.id) ? 1 : 0;
+    return bFav - aFav;
+  });
 }
 
 window.NotyNotes = {
@@ -86,8 +119,22 @@ function renderNotesList() {
     button.className = note.id === selectedNoteId ? "note-item active" : "note-item";
     button.type = "button";
 
+    const header = document.createElement("div");
+    header.className = "note-item-header";
+
     const title = document.createElement("strong");
     title.textContent = note.title;
+
+    const favoriteButton = document.createElement("span");
+    favoriteButton.className = isFavorite(note.id) ? "favorite-star active" : "favorite-star";
+    favoriteButton.textContent = "⭐";
+    favoriteButton.title = "Marcar como favorita";
+    favoriteButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleFavorite(note.id);
+    });
+
+    header.append(title, favoriteButton);
 
     const preview = document.createElement("p");
     preview.className = "note-preview";
@@ -97,7 +144,7 @@ function renderNotesList() {
     date.className = "note-date";
     date.textContent = new Date(note.updated_at).toLocaleString();
 
-    button.append(title, preview, date);
+    button.append(header, preview, date);
     button.addEventListener("click", () => setEditor(note));
     notesList.appendChild(button);
   });

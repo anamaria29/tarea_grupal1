@@ -23,6 +23,11 @@
         <input id="searchNotes" type="text" placeholder="Buscar notas..." aria-label="Buscar notas">
       </div>
 
+      <div class="selection-toolbar">
+        <button id="selectModeButton" class="button secondary" type="button" title="Elegir varias notas para eliminarlas juntas">☑️ Seleccionar</button>
+        <button id="bulkDeleteButton" class="button danger" type="button" hidden>🗑️ Eliminar (<span id="selectedCount">0</span>)</button>
+      </div>
+
       <div id="notesList" class="notes-list" aria-label="Lista de notas"></div>
     </aside>
 

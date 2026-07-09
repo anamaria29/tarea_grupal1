@@ -278,6 +278,20 @@ a {
   color: var(--muted);
 }
 
+.selection-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.selection-toolbar .button {
+  flex: 1;
+  padding: 0 10px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
 .notes-list {
   display: grid;
   gap: var(--spacing-md);
@@ -286,6 +300,7 @@ a {
 }
 
 .note-item {
+  position: relative;
   display: grid;
   gap: var(--spacing-sm);
   width: 100%;
@@ -303,6 +318,25 @@ a {
 .note-item:hover {
   background: #fafafa;
   box-shadow: var(--card-shadow-hover);
+}
+
+.note-item.selection-mode {
+  padding-left: 40px;
+}
+
+.note-item.selected {
+  border-color: var(--primary);
+  background: #eef4ff;
+}
+
+.select-checkbox {
+  position: absolute;
+  top: var(--spacing-lg);
+  left: var(--spacing-md);
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
 }
 
 .note-item.active {

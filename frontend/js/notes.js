@@ -15,10 +15,15 @@ const exportPdfButton = document.querySelector("#exportPdfButton");
 const logoutButton = document.querySelector("#logoutButton");
 const toolbar = document.querySelector(".toolbar");
 const searchNotesInput = document.querySelector("#searchNotes");
+const selectModeButton = document.querySelector("#selectModeButton");
+const bulkDeleteButton = document.querySelector("#bulkDeleteButton");
+const selectedCountEl = document.querySelector("#selectedCount");
 
 let notes = [];
 let selectedNoteId = null;
 let searchTerm = "";
+let selectionMode = false;
+let selectedForDeletion = new Set();
 
 const FAVORITES_KEY = "noty_favorite_notes";
 
@@ -116,8 +121,27 @@ function renderNotesList() {
 
   visibleNotes.forEach((note) => {
     const button = document.createElement("button");
+    const isSelected = selectedForDeletion.has(note.id);
     button.className = note.id === selectedNoteId ? "note-item active" : "note-item";
+    if (selectionMode) {
+      button.classList.add("selection-mode");
+    }
+    if (isSelected) {
+      button.classList.add("selected");
+    }
     button.type = "button";
+
+    if (selectionMode) {
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "select-checkbox";
+      checkbox.checked = isSelected;
+      checkbox.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleNoteSelection(note.id);
+      });
+      button.appendChild(checkbox);
+    }
 
     const header = document.createElement("div");
     header.className = "note-item-header";
@@ -146,9 +170,76 @@ function renderNotesList() {
     date.textContent = new Date(note.updated_at).toLocaleString();
 
     button.append(header, preview, date);
-    button.addEventListener("click", () => setEditor(note));
+    button.addEventListener("click", () => {
+      if (selectionMode) {
+        toggleNoteSelection(note.id);
+      } else {
+        setEditor(note);
+      }
+    });
     notesList.appendChild(button);
   });
+}
+
+function toggleSelectionMode() {
+  selectionMode = !selectionMode;
+  selectedForDeletion.clear();
+
+  if (selectionMode) {
+    selectModeButton.textContent = "✕ Cancelar";
+  } else {
+    selectModeButton.textContent = "☑️ Seleccionar";
+  }
+
+  updateBulkDeleteUI();
+  renderNotesList();
+}
+
+function toggleNoteSelection(noteId) {
+  if (selectedForDeletion.has(noteId)) {
+    selectedForDeletion.delete(noteId);
+  } else {
+    selectedForDeletion.add(noteId);
+  }
+
+  updateBulkDeleteUI();
+  renderNotesList();
+}
+
+function updateBulkDeleteUI() {
+  const count = selectedForDeletion.size;
+  selectedCountEl.textContent = count;
+  bulkDeleteButton.hidden = !selectionMode || count === 0;
+}
+
+async function bulkDeleteSelectedNotes() {
+  const count = selectedForDeletion.size;
+
+  if (count === 0) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    count === 1
+      ? "Quieres eliminar 1 nota seleccionada?"
+      : `Quieres eliminar ${count} notas seleccionadas?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    showMessage("Eliminando notas...");
+    await Promise.all(
+      [...selectedForDeletion].map((id) => apiRequest(`/notes/${id}`, { method: "DELETE" }))
+    );
+    showMessage("Notas eliminadas correctamente.", "success");
+    toggleSelectionMode();
+    await loadNotes();
+  } catch (error) {
+    showMessage(error.message, "error");
+  }
 }
 
 async function loadNotes() {
@@ -298,6 +389,10 @@ searchNotesInput.addEventListener("input", (event) => {
   searchTerm = event.target.value;
   renderNotesList();
 });
+
+selectModeButton.addEventListener("click", () => toggleSelectionMode());
+
+bulkDeleteButton.addEventListener("click", () => bulkDeleteSelectedNotes());
 
 newNoteButton.addEventListener("click", () => setEditor(null));
 

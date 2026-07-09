@@ -123,11 +123,12 @@ function renderNotesList() {
     header.className = "note-item-header";
 
     const title = document.createElement("strong");
-    title.textContent = note.title;
+    title.textContent = `📄 ${note.title}`;
 
     const favoriteButton = document.createElement("span");
-    favoriteButton.className = isFavorite(note.id) ? "favorite-star active" : "favorite-star";
-    favoriteButton.textContent = "⭐";
+    favoriteButton.className = isFavorite(note.id) ? "favoriteBtn active" : "favoriteBtn";
+    favoriteButton.dataset.id = note.id;
+    favoriteButton.textContent = "★";
     favoriteButton.title = "Marcar como favorita";
     favoriteButton.addEventListener("click", (event) => {
       event.stopPropagation();

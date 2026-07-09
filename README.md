@@ -1,6 +1,6 @@
 # Tarea Grupal #1
 
-##Miembros:
+## Miembros:
 - Adrián González
 - Kristhel Porras
 - Ana María Ramírez

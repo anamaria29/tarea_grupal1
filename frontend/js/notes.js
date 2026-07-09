@@ -14,9 +14,30 @@ const deleteNoteButton = document.querySelector("#deleteNoteButton");
 const exportPdfButton = document.querySelector("#exportPdfButton");
 const logoutButton = document.querySelector("#logoutButton");
 const toolbar = document.querySelector(".toolbar");
+const searchNotesInput = document.querySelector("#searchNotes");
 
 let notes = [];
 let selectedNoteId = null;
+let searchTerm = "";
+
+function getNotePreview(content) {
+  const container = document.createElement("div");
+  container.innerHTML = content || "";
+  const text = container.textContent || container.innerText || "";
+  const trimmed = text.trim();
+  return trimmed.length > 90 ? `${trimmed.slice(0, 90)}...` : trimmed;
+}
+
+function getVisibleNotes() {
+  const term = searchTerm.trim().toLowerCase();
+
+  if (!term) {
+    return notes;
+  }
+
+  return notes.filter((note) => note.title.toLowerCase().includes(term)
+    || getNotePreview(note.content).toLowerCase().includes(term));
+}
 
 window.NotyNotes = {
   saveNote: () => saveNote(),
@@ -53,7 +74,14 @@ function renderNotesList() {
     return;
   }
 
-  notes.forEach((note) => {
+  const visibleNotes = getVisibleNotes();
+
+  if (visibleNotes.length === 0) {
+    notesList.innerHTML = '<p class="empty-state">Ninguna nota coincide con la busqueda.</p>';
+    return;
+  }
+
+  visibleNotes.forEach((note) => {
     const button = document.createElement("button");
     button.className = note.id === selectedNoteId ? "note-item active" : "note-item";
     button.type = "button";
@@ -61,10 +89,15 @@ function renderNotesList() {
     const title = document.createElement("strong");
     title.textContent = note.title;
 
+    const preview = document.createElement("p");
+    preview.className = "note-preview";
+    preview.textContent = getNotePreview(note.content) || "Sin contenido todavia.";
+
     const date = document.createElement("span");
+    date.className = "note-date";
     date.textContent = new Date(note.updated_at).toLocaleString();
 
-    button.append(title, date);
+    button.append(title, preview, date);
     button.addEventListener("click", () => setEditor(note));
     notesList.appendChild(button);
   });
@@ -211,6 +244,11 @@ toolbar.addEventListener("click", (event) => {
   }
 
   applyFormat(button.dataset.command, button.dataset.value || null);
+});
+
+searchNotesInput.addEventListener("input", (event) => {
+  searchTerm = event.target.value;
+  renderNotesList();
 });
 
 newNoteButton.addEventListener("click", () => setEditor(null));

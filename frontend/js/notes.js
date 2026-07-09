@@ -110,7 +110,7 @@ function renderNotesList() {
   const visibleNotes = getVisibleNotes();
 
   if (visibleNotes.length === 0) {
-    notesList.innerHTML = '<p class="empty-state">Ninguna nota coincide con la busqueda.</p>';
+    notesList.innerHTML = '<p class="empty-state">No se encontraron notas.</p>';
     return;
   }
 

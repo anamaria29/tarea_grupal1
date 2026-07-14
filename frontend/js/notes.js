@@ -22,6 +22,9 @@ const noteStatsEl = document.querySelector("#noteStats");
 const noteTagsInput = document.querySelector("#noteTagsInput");
 const noteCountEl = document.querySelector("#noteCount");
 const themeToggleButton = document.querySelector("#themeToggleButton");
+const menuToggleButton = document.querySelector("#menuToggleButton");
+const sidebarEl = document.querySelector("#sidebar");
+const sidebarBackdrop = document.querySelector("#sidebarBackdrop");
 const undoToast = document.querySelector("#undoToast");
 const undoToastText = document.querySelector("#undoToastText");
 const undoButton = document.querySelector("#undoButton");
@@ -318,11 +321,16 @@ function renderNotesList() {
     const title = document.createElement("strong");
     title.textContent = `📄 ${note.title}`;
 
-    const favoriteButton = document.createElement("span");
-    favoriteButton.className = isFavorite(note.id) ? "favoriteBtn active" : "favoriteBtn";
+    const favoriteButton = document.createElement("button");
+    favoriteButton.type = "button";
+    const isFav = isFavorite(note.id);
+    favoriteButton.className = isFav ? "favoriteBtn active" : "favoriteBtn";
     favoriteButton.dataset.id = note.id;
     favoriteButton.textContent = "★";
-    favoriteButton.title = "Marcar como favorita";
+    favoriteButton.setAttribute("aria-pressed", String(isFav));
+    const favLabel = isFav ? "Quitar de favoritos" : "Marcar como favorita";
+    favoriteButton.setAttribute("aria-label", favLabel);
+    favoriteButton.title = favLabel;
     favoriteButton.addEventListener("click", (event) => {
       event.stopPropagation();
       toggleFavorite(note.id);
@@ -362,6 +370,9 @@ function renderNotesList() {
         toggleNoteSelection(note.id);
       } else if (note.id !== selectedNoteId && confirmDiscardIfDirty()) {
         setEditor(note);
+        closeSidebar();
+      } else {
+        closeSidebar();
       }
     });
     notesList.appendChild(button);
@@ -655,8 +666,15 @@ bulkDeleteButton.addEventListener("click", () => bulkDeleteSelectedNotes());
 
 undoButton.addEventListener("click", () => undoPendingDeletion());
 
+const MOON_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const SUN_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+
 function updateThemeToggleIcon() {
-  themeToggleButton.textContent = getTheme() === "dark" ? "☀️" : "🌙";
+  const isDark = getTheme() === "dark";
+  themeToggleButton.innerHTML = isDark ? SUN_ICON : MOON_ICON;
+  const label = isDark ? "Cambiar a modo claro" : "Cambiar a modo nocturno";
+  themeToggleButton.setAttribute("aria-label", label);
+  themeToggleButton.setAttribute("title", label);
 }
 
 themeToggleButton.addEventListener("click", () => {
@@ -666,12 +684,42 @@ themeToggleButton.addEventListener("click", () => {
 
 updateThemeToggleIcon();
 
+function openSidebar() {
+  sidebarEl.classList.add("open");
+  sidebarBackdrop.hidden = false;
+  menuToggleButton.setAttribute("aria-expanded", "true");
+}
+
+function closeSidebar() {
+  sidebarEl.classList.remove("open");
+  sidebarBackdrop.hidden = true;
+  menuToggleButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleSidebar() {
+  if (sidebarEl.classList.contains("open")) {
+    closeSidebar();
+  } else {
+    openSidebar();
+  }
+}
+
+menuToggleButton.addEventListener("click", () => toggleSidebar());
+sidebarBackdrop.addEventListener("click", () => closeSidebar());
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && sidebarEl.classList.contains("open")) {
+    closeSidebar();
+  }
+});
+
 newNoteButton.addEventListener("click", () => {
   if (!confirmDiscardIfDirty()) {
     return;
   }
   setEditor(null);
   noteTitle.focus();
+  closeSidebar();
 });
 
 logoutButton.addEventListener("click", () => {
